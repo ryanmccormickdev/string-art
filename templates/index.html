@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>string art studio</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="panel">
+    <h1>string art</h1>
+
+    <section class="field">
+      <label>photo</label>
+      <input type="file" id="imageInput" accept="image/*">
+      <img id="imagePreview" class="thumb" hidden>
+    </section>
+
+    <section class="grid2">
+      <div class="field">
+        <label for="nails">nails</label>
+        <input type="number" id="nails" value="200" min="3" step="1">
+      </div>
+      <div class="field">
+        <label for="diameter">diameter (in)</label>
+        <input type="number" id="diameter" value="12" min="1" step="0.5">
+      </div>
+      <div class="field">
+        <label for="thread_mm">thread (mm)</label>
+        <input type="number" id="thread_mm" value="0.2" min="0.01" step="0.01">
+      </div>
+      <div class="field">
+        <label for="opacity">opacity</label>
+        <input type="number" id="opacity" value="0.8" min="0" max="1" step="0.05">
+      </div>
+      <div class="field">
+        <label for="weight">weight override</label>
+        <input type="number" id="weight" placeholder="auto" min="0" max="1" step="0.01">
+      </div>
+      <div class="field">
+        <label for="res">solve res (px)</label>
+        <input type="number" id="res" value="900" min="200" step="50">
+      </div>
+      <div class="field">
+        <label for="max_lines">max lines</label>
+        <input type="number" id="max_lines" value="6000" min="1" step="100">
+      </div>
+      <div class="field">
+        <label for="min_gap">min gap</label>
+        <input type="number" id="min_gap" value="15" min="0" step="1">
+      </div>
+      <div class="field">
+        <label for="contrast">contrast</label>
+        <input type="number" id="contrast" value="1.5" min="0" step="0.1">
+      </div>
+      <div class="field">
+        <label for="gamma">gamma</label>
+        <input type="number" id="gamma" value="1.0" min="0.1" step="0.1">
+      </div>
+      <div class="field">
+        <label for="start_nail">start nail</label>
+        <input type="number" id="start_nail" value="0" min="0" step="1">
+      </div>
+    </section>
+
+    <section class="grid2">
+      <div class="field">
+        <label for="threadColor">thread color</label>
+        <input type="color" id="threadColor" value="#000000">
+      </div>
+      <div class="field">
+        <label for="bgColor">background color</label>
+        <input type="color" id="bgColor" value="#ffffff">
+      </div>
+    </section>
+
+    <section class="field checkboxes">
+      <label><input type="checkbox" id="allow_repeat_pairs"> allow repeat pairs</label>
+      <label><input type="checkbox" id="invert"> invert (light thread / dark board)</label>
+      <label><input type="checkbox" id="no_autocontrast"> disable autocontrast</label>
+    </section>
+
+    <button id="generateBtn" class="primary">generate</button>
+    <div id="status" class="status"></div>
+
+    <section id="exportSection" class="field" hidden>
+      <label>export</label>
+      <div class="export-grid">
+        <button data-fmt="preview_png">preview PNG</button>
+        <button data-fmt="preview_svg">preview SVG</button>
+        <button data-fmt="progress_png">progress grid</button>
+        <button data-fmt="simulation_png">simulation PNG</button>
+        <button data-fmt="sequence_json">sequence.json</button>
+        <button data-fmt="sequence_txt">sequence.txt</button>
+        <button data-fmt="template_pdf">nail template PDF</button>
+      </div>
+    </section>
+  </aside>
+
+  <main class="stage">
+    <div class="tabs">
+      <button class="tab active" data-view="build">live build</button>
+      <button class="tab" data-view="target">target</button>
+      <button class="tab" data-view="simulation">simulation</button>
+    </div>
+
+    <div class="viewport">
+      <canvas id="buildCanvas" width="800" height="800"></canvas>
+      <img id="targetImg" class="static-view" hidden>
+      <img id="simulationImg" class="static-view" hidden>
+      <div id="placeholder" class="placeholder">pick a photo and hit generate</div>
+    </div>
+
+    <div class="transport" id="transport" hidden>
+      <button id="playBtn" title="play/pause">&#9654;</button>
+      <input type="range" id="scrubber" min="0" max="1" value="0" step="1">
+      <span id="lineCounter">0 / 0</span>
+      <label class="speed">
+        speed
+        <input type="range" id="speedSlider" min="1" max="400" value="60" step="1">
+      </label>
+    </div>
+
+    <div id="meta" class="meta"></div>
+  </main>
+
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>String Art — Winder</title>
+<style>
+  :root {
+    --ink: #16181d;
+    --muted: #6b7280;
+    --line: #e2e4e8;
+    --panel: #ffffff;
+    --bg: #f4f4f2;
+    --go: #e5008d;
+    --from: #2563c9;
+    --warn: #c0392b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-user-select: none; user-select: none;
+  }
+  header {
+    display: flex; align-items: center; gap: 18px;
+    padding: 10px 20px; background: var(--panel);
+    border-bottom: 1px solid var(--line);
+  }
+  header .seq { color: var(--muted); font-size: 13px; margin-left: auto; }
+  .tab {
+    border: 0; background: none; font: inherit; font-weight: 600;
+    padding: 8px 14px; border-radius: 8px; cursor: pointer; color: var(--muted);
+  }
+  .tab.on { background: var(--ink); color: #fff; }
+  main { padding: 20px; }
+  .hide { display: none !important; }
+
+  .grid {
+    display: grid; grid-template-columns: minmax(320px, 400px) 1fr;
+    gap: 20px; align-items: start;
+  }
+  .panel {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 14px; padding: 18px;
+  }
+
+  .fromline { color: var(--muted); font-size: 15px; letter-spacing: .04em; }
+  .fromline b { color: var(--from); font-size: 22px; }
+  .big {
+    font-size: clamp(90px, 15vw, 190px); font-weight: 800; line-height: .95;
+    letter-spacing: -.04em; color: var(--go); font-variant-numeric: tabular-nums;
+    margin: 4px 0 2px;
+  }
+  .big.done { color: var(--muted); font-size: 60px; }
+  .progress { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .bar { height: 7px; background: var(--line); border-radius: 4px; margin: 12px 0 16px; }
+  .bar > i { display: block; height: 100%; background: var(--go); border-radius: 4px; }
+
+  .btnrow { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
+  button.act {
+    font: inherit; font-weight: 700; cursor: pointer; border-radius: 12px;
+    border: 1px solid var(--line); background: #fff; padding: 22px 10px;
+    font-size: 20px;
+  }
+  button.act:active { transform: translateY(1px); }
+  button.act.primary { background: var(--go); border-color: var(--go); color: #fff; font-size: 30px; }
+  button.act small { display: block; font-size: 11px; font-weight: 600; opacity: .65; margin-top: 4px; }
+
+  .modes { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; align-items: center; }
+  .modes button {
+    font: inherit; font-weight: 600; cursor: pointer; padding: 10px 14px;
+    border-radius: 10px; border: 1px solid var(--line); background: #fff;
+  }
+  .modes button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .modes input { width: 78px; padding: 9px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+  .modes label { font-size: 13px; color: var(--muted); }
+  .countdown { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 18px; min-width: 58px; }
+
+  table.eta { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  table.eta td { padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  table.eta td:first-child { color: var(--muted); }
+  table.eta td:last-child { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+  table.eta tr:last-child td { border-bottom: 0; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 0 0 10px; }
+
+  .boards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .boards figure { margin: 0; }
+  .boards canvas { width: 100%; aspect-ratio: 1; display: block; border-radius: 12px; }
+  .boards figcaption { font-size: 12px; color: var(--muted); text-align: center; margin-top: 8px; }
+
+  .findbar { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
+  .findbar input {
+    flex: 1; padding: 14px; font: inherit; font-size: 18px;
+    border: 1px solid var(--line); border-radius: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .findbar button { font: inherit; font-weight: 700; padding: 14px 22px; border-radius: 10px; border: 0; background: var(--ink); color: #fff; cursor: pointer; }
+  .hint { color: var(--muted); font-size: 13px; }
+  .cands { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; margin-top: 18px; }
+  .cand { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px; cursor: pointer; text-align: center; }
+  .cand:hover { border-color: var(--go); }
+  .cand.current { border-color: var(--from); border-width: 2px; }
+  .cand canvas { width: 100%; aspect-ratio: 1; display: block; }
+  .cand .lbl { font-size: 13px; font-weight: 700; margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .cand .sub { font-size: 11px; color: var(--muted); }
+  .toast { margin-top: 12px; font-size: 13px; color: var(--go); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header>
+  <button class="tab on" data-tab="place">Place</button>
+  <button class="tab" data-tab="find">Find my spot</button>
+  <span class="seq" id="seqinfo"></span>
+</header>
+
+<main>
+<section id="tab-place">
+  <div class="grid">
+    <div>
+      <div class="panel">
+        <div class="fromline">string is on <b id="fromPin">—</b> &nbsp;→&nbsp; wrap next</div>
+        <div class="big" id="bigPin">—</div>
+        <div class="progress" id="progress">—</div>
+        <div class="bar"><i id="barfill" style="width:0"></i></div>
+
+        <div class="btnrow">
+          <button class="act" id="btnBack">← Back<small>backspace</small></button>
+          <button class="act primary" id="btnNext">Next →<small>space</small></button>
+        </div>
+
+        <div class="modes">
+          <button id="btnAuto">Auto</button>
+          <input type="number" id="autoMs" value="8000" min="500" step="500">
+          <label>ms</label>
+          <span class="countdown" id="countdown"></span>
+        </div>
+        <div class="modes">
+          <button id="btnVoice">Voice</button>
+          <span class="hint" id="voiceHint">say “next” / “back”</span>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:20px">
+        <h2>Timing</h2>
+        <table class="eta">
+          <tr><td>This session</td><td id="tSession">0:00</td></tr>
+          <tr><td>Total winding time</td><td id="tTotal">0:00</td></tr>
+          <tr><td>Average per line</td><td id="tAvg">—</td></tr>
+          <tr><td>Lines remaining</td><td id="tRemain">—</td></tr>
+          <tr><td>Estimated remaining</td><td id="tEta">—</td></tr>
+          <tr><td>Projected finish</td><td id="tFinish">—</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="boards">
+        <figure>
+          <canvas id="cvFull"></canvas>
+          <figcaption>full board — 10s in red, 5s in green</figcaption>
+        </figure>
+        <figure>
+          <canvas id="cvZoom"></canvas>
+          <figcaption id="zoomCap">zoom</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-find" class="hide">
+  <div class="panel">
+    <h2>Recover position</h2>
+    <div class="findbar">
+      <input id="findInput" placeholder="last nails you wrapped, oldest first — e.g.  36 171 140 198"
+             inputmode="numeric" autocomplete="off">
+      <button id="btnFind">Search</button>
+    </div>
+    <div class="hint">Enter the nails in the order you wrapped them, ending with the one the
+      string is sitting on now. More nails = fewer matches.</div>
+    <div class="toast hide" id="findToast"></div>
+    <div class="cands" id="cands"></div>
+  </div>
+</section>
+</main>
+
+<script>
+"use strict";
+
+const S = {
+  path: [], N: 200, nLines: 0, idx: 0, stats: null,
+  auto: false, autoNext: 0, voice: false, lastVoice: 0,
+  sessionStart: Date.now(), chain: Promise.resolve(),
+};
+
+const $ = id => document.getElementById(id);
+const CX = 500, CY = 500, RING = 412, LABEL_R = 458;
+// Match the physical board: red on every 10th nail, green on the 5s between
+// them. The target nail therefore has to be a colour neither marker uses.
+const DECADE = "#c0392b", FIVE = "#1b8a5a";
+const TARGET = "#e5008d", CURRENT = "#2563c9";
+
+function nailPos(i) {
+  const th = 2 * Math.PI * i / S.N;
+  return [CX + RING * Math.sin(th), CY - RING * Math.cos(th)];
+}
+
+// ---------- rendering ----------
+// Board geometry lives in a fixed 1000x1000 space; every draw maps it into the
+// canvas with a scale+offset, so the zoom view is literally a crop of the same
+// render rather than a separate layout.
+function drawBoard(cv, opts) {
+  const dpr = window.devicePixelRatio || 1;
+  const size = cv.clientWidth || 400;
+  cv.width = cv.height = Math.round(size * dpr);
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = "#fbfbf9";
+  ctx.fillRect(0, 0, size, size);
+
+  const base = size / 1000;
+  let s = base, ox = 0, oy = 0;
+  if (opts.zoomNail != null) {
+    s = base * opts.factor;
+    const [zx, zy] = nailPos(opts.zoomNail);
+    ox = size / 2 - zx * s;
+    oy = size / 2 - zy * s;
+  }
+  const X = x => x * s + ox, Y = y => y * s + oy;
+  const idx = opts.index, thumb = !!opts.thumb;
+
+  ctx.beginPath();
+  ctx.arc(X(CX), Y(CY), RING * s, 0, 2 * Math.PI);
+  ctx.strokeStyle = "#e8e6e0";
+  ctx.lineWidth = Math.max(1, 1.5 * base);
+  ctx.stroke();
+
+  // Every line placed so far, all weighted the same -- this is the picture as
+  // it actually stands on the board right now.
+  //
+  // Each line gets its own stroke() rather than one batched path: within a
+  // single path canvas composites the whole thing at one alpha, so overlapping
+  // thread would never darken and the image would never emerge.
+  ctx.strokeStyle = thumb ? "rgba(20,20,20,.22)" : "rgba(20,20,20,.18)";
+  ctx.lineWidth = Math.max(.5, (thumb ? .7 : .95) * base);
+  for (let k = 0; k < idx; k++) {
+    const [ax, ay] = nailPos(S.path[k]);
+    const [bx, by] = nailPos(S.path[k + 1]);
+    ctx.beginPath();
+    ctx.moveTo(X(ax), Y(ay));
+    ctx.lineTo(X(bx), Y(by));
+    ctx.stroke();
+  }
+
+  // The line you are about to lay down.
+  if (idx < S.nLines && !thumb) {
+    const [ax, ay] = nailPos(S.path[idx]);
+    const [bx, by] = nailPos(S.path[idx + 1]);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(X(ax), Y(ay));
+    ctx.lineTo(X(bx), Y(by));
+    ctx.strokeStyle = TARGET;
+    ctx.lineWidth = Math.max(2, 3.2 * base);
+    ctx.setLineDash([9 * base, 6 * base]);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  const cur = S.path[idx];
+  const tgt = idx < S.nLines ? S.path[idx + 1] : null;
+  const zoomed = opts.zoomNail != null;
+  // Nails and labels are sized in screen space, not board space, so the zoom
+  // view has to grow them itself or they stay pinhead-sized.
+  const dotR = Math.max(1.1, (thumb ? 1.6 : 3.0) * base * (zoomed ? 2.1 : 1));
+  const labelPx = thumb ? 0 : (zoomed ? 26 : 17) * base;
+
+  for (let i = 0; i < S.N; i++) {
+    const [x, y] = nailPos(i);
+    const px = X(x), py = Y(y);
+    if (px < -40 || py < -40 || px > size + 40 || py > size + 40) continue;
+    const decade = i % 10 === 0;
+    const five = i % 10 === 5;
+    if (i === cur || i === tgt) continue;
+
+    ctx.beginPath();
+    ctx.arc(px, py, decade || five ? dotR * 1.7 : dotR, 0, 2 * Math.PI);
+    ctx.fillStyle = decade ? DECADE : five ? FIVE : "#b9bcc2";
+    ctx.fill();
+
+    if (thumb) continue;
+    if (decade || five || opts.labelAll) {
+      const lr = zoomed ? 1.045 : LABEL_R / RING;
+      const lx = X(CX + (x - CX) * lr), ly = Y(CY + (y - CY) * lr);
+      // The 5s sit a shade smaller so the red decades still lead the eye.
+      const size = Math.max(9, five && !zoomed ? labelPx * .86 : labelPx);
+      ctx.font = `${decade ? 700 : five ? 600 : 500} ${size}px -apple-system, sans-serif`;
+      ctx.fillStyle = decade ? DECADE : five ? FIVE : "#9aa0a8";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(i, lx, ly);
+    }
+  }
+
+  const marker = (i, color, scale, label) => {
+    if (i == null) return;
+    const [x, y] = nailPos(i);
+    const px = X(x), py = Y(y);
+    ctx.beginPath();
+    ctx.arc(px, py, dotR * scale, 0, 2 * Math.PI);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.lineWidth = Math.max(1.5, 2 * base);
+    ctx.strokeStyle = "#fff";
+    ctx.stroke();
+    if (thumb || !label) return;
+    const lr = zoomed ? 1.062 : LABEL_R / RING + .022;
+    ctx.font = `800 ${Math.max(11, (zoomed ? 36 : 21) * base)}px -apple-system, sans-serif`;
+    ctx.fillStyle = color;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(i, X(CX + (x - CX) * lr), Y(CY + (y - CY) * lr));
+  };
+  marker(cur, CURRENT, 2.4, true);
+  marker(tgt, TARGET, 3.2, true);
+
+  // Halo so the eye lands on the target nail immediately.
+  if (tgt != null && !thumb) {
+    const [x, y] = nailPos(tgt);
+    ctx.beginPath();
+    ctx.arc(X(x), Y(y), dotR * 6.5, 0, 2 * Math.PI);
+    ctx.strokeStyle = "rgba(229,0,141,.5)";
+    ctx.lineWidth = Math.max(1.5, 2.2 * base);
+    ctx.stroke();
+  }
+}
+
+function render() {
+  const done = S.idx >= S.nLines;
+  const tgt = done ? null : S.path[S.idx + 1];
+  $("fromPin").textContent = S.path[S.idx];
+  $("bigPin").textContent = done ? "DONE — tie off" : tgt;
+  $("bigPin").classList.toggle("done", done);
+  $("progress").textContent =
+    `line ${S.idx + (done ? 0 : 1)} of ${S.nLines}  ·  ${(100 * S.idx / S.nLines).toFixed(1)}%`;
+  $("barfill").style.width = `${100 * S.idx / S.nLines}%`;
+  $("zoomCap").textContent = done ? "zoom" : `zoom around nail ${tgt}`;
+
+  drawBoard($("cvFull"), { index: S.idx });
+  drawBoard($("cvZoom"), { index: S.idx, zoomNail: tgt ?? S.path[S.idx],
+                            factor: 4.2, labelAll: true });
+  renderEta();
+}
+
+// ---------- timing ----------
+function hms(sec) {
+  if (sec == null || !isFinite(sec)) return "—";
+  sec = Math.max(0, Math.round(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  return h ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function renderEta() {
+  const st = S.stats;
+  $("tSession").textContent = hms((Date.now() - S.sessionStart) / 1000);
+  if (!st) return;
+  $("tTotal").textContent = hms(st.total_working_seconds);
+  $("tAvg").textContent = st.avg_seconds
+    ? `${st.avg_seconds.toFixed(1)}s  (n=${st.samples})` : "—";
+  $("tRemain").textContent = st.remaining;
+  $("tEta").textContent = hms(st.eta_seconds);
+  if (st.eta_seconds && st.remaining > 0) {
+    const at = new Date(Date.now() + st.eta_seconds * 1000);
+    const day = at.toDateString() === new Date().toDateString()
+      ? "" : ` ${at.toLocaleDateString([], { weekday: "short" })}`;
+    $("tFinish").textContent =
+      at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) + day;
+  } else {
+    $("tFinish").textContent = st.remaining > 0 ? "—" : "complete";
+  }
+}
+setInterval(renderEta, 1000);
+
+// ---------- moves ----------
+async function api(url, body) {
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+
+function move(delta) {
+  const next = Math.max(0, Math.min(S.idx + delta, S.nLines));
+  if (next === S.idx) return;
+  S.idx = next;              // optimistic; server confirms below
+  render();
+  if (S.auto) S.autoNext = Date.now() + autoDelay();
+  S.chain = S.chain
+    .then(() => api("/api/move", { delta }))
+    .then(j => { S.idx = j.index; S.stats = j.stats; render(); })
+    .catch(e => console.error("move failed", e));
+}
+
+$("btnNext").onclick = () => move(1);
+$("btnBack").onclick = () => move(-1);
+
+addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.code === "Space" || e.code === "ArrowRight" || e.code === "Enter") {
+    e.preventDefault(); move(1);
+  } else if (e.code === "Backspace" || e.code === "ArrowLeft") {
+    e.preventDefault(); move(-1);
+  }
+});
+
+// ---------- auto mode ----------
+const autoDelay = () => Math.max(500, +$("autoMs").value || 8000);
+
+$("btnAuto").onclick = () => {
+  S.auto = !S.auto;
+  $("btnAuto").classList.toggle("on", S.auto);
+  S.autoNext = Date.now() + autoDelay();
+  if (!S.auto) $("countdown").textContent = "";
+};
+
+setInterval(() => {
+  if (!S.auto) return;
+  if (S.idx >= S.nLines) { S.auto = false; $("btnAuto").classList.remove("on"); $("countdown").textContent = ""; return; }
+  const left = S.autoNext - Date.now();
+  if (left <= 0) { move(1); return; }
+  $("countdown").textContent = `${(left / 1000).toFixed(1)}s`;
+}, 100);
+
+// ---------- voice ----------
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SR) {
+  $("btnVoice").disabled = true;
+  $("voiceHint").textContent = "voice needs Chrome";
+}
+
+// Chrome's SpeechRecognition is not fire-and-forget. It stops on its own after
+// a stretch of silence, and it can also go quiet while still claiming to run --
+// which is why it died after about a minute. So keep one recognizer and
+// babysit it: restart whenever it ends, and cycle it every ~45s during a lull
+// so it never gets the chance to go silently deaf.
+let rec = null, recRunning = false, recStartedAt = 0, lastHeardAt = 0;
+
+const hint = msg => { $("voiceHint").textContent = msg; };
+const LISTENING = "listening — “next” / “back”";
+
+function buildRec() {
+  const r = new SR();
+  r.continuous = true;
+  r.interimResults = true;
+  r.lang = "en-US";
+
+  r.onstart = () => {
+    recRunning = true;
+    recStartedAt = Date.now();
+    if (S.voice) hint(LISTENING);
+  };
+  r.onresult = ev => {
+    lastHeardAt = Date.now();
+    const said = ev.results[ev.results.length - 1][0].transcript.toLowerCase();
+    if (lastHeardAt - S.lastVoice < 1100) return;
+    if (/\b(back|previous|undo)\b/.test(said)) { S.lastVoice = lastHeardAt; move(-1); }
+    else if (/\b(next|forward|go)\b/.test(said)) { S.lastVoice = lastHeardAt; move(1); }
+  };
+  r.onerror = ev => {
+    // "no-speech" and "aborted" are routine here; onend does the restart.
+    if (ev.error === "not-allowed" || ev.error === "service-not-allowed") {
+      S.voice = false;
+      $("btnVoice").classList.remove("on");
+      hint("mic permission blocked");
+    } else if (ev.error === "network" && S.voice) {
+      hint("network hiccup — retrying");
+    }
+  };
+  r.onend = () => {
+    recRunning = false;
+    // start() throws if called synchronously from onend, so let it settle.
+    if (S.voice) setTimeout(recStart, 250);
+  };
+  return r;
+}
+
+function recStart() {
+  if (!S.voice || recRunning) return;
+  rec ||= buildRec();
+  try {
+    rec.start();
+  } catch (e) {
+    // Already-started is benign; anything else gets another try shortly.
+    if (e && e.name === "InvalidStateError") recRunning = true;
+    else setTimeout(recStart, 600);
+  }
+}
+
+setInterval(() => {
+  if (!S.voice) return;
+  const now = Date.now();
+  if (!recRunning) { hint("reconnecting…"); recStart(); return; }
+  if (now - recStartedAt > 45000 && now - lastHeardAt > 2500) {
+    try { rec.stop(); } catch (e) { /* onend restarts it */ }
+  }
+}, 2000);
+
+$("btnVoice").onclick = () => {
+  S.voice = !S.voice;
+  $("btnVoice").classList.toggle("on", S.voice);
+  if (S.voice) {
+    hint("starting…");
+    lastHeardAt = Date.now();
+    recStart();
+  } else {
+    hint("say “next” / “back”");
+    if (rec) { try { rec.abort(); } catch (e) {} }
+    recRunning = false;
+  }
+};
+
+// ---------- tabs ----------
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
+  $("tab-place").classList.toggle("hide", t.dataset.tab !== "place");
+  $("tab-find").classList.toggle("hide", t.dataset.tab !== "find");
+  if (t.dataset.tab === "place") render();
+});
+
+// ---------- find ----------
+async function runSearch() {
+  const pins = $("findInput").value.split(/[^0-9]+/).filter(Boolean).map(Number);
+  const box = $("cands");
+  box.innerHTML = "";
+  $("findToast").classList.add("hide");
+  if (!pins.length) return;
+
+  let j;
+  try {
+    j = await api("/api/search", { pins });
+  } catch (e) {
+    box.innerHTML = `<div class="hint">${e.message}</div>`;
+    return;
+  }
+  if (!j.count) {
+    box.innerHTML = `<div class="hint">No place in the sequence matches ${pins.join(" → ")}. ` +
+                    `Check the order (oldest first) and the nail numbers.</div>`;
+    return;
+  }
+
+  const shown = j.matches.slice(0, 60);
+  for (const i of shown) {
+    const el = document.createElement("div");
+    el.className = "cand" + (i === S.idx ? " current" : "");
+    el.innerHTML = `<canvas></canvas>
+      <div class="lbl">line ${i} · ${(100 * i / S.nLines).toFixed(1)}%</div>
+      <div class="sub">next would be ${i < S.nLines ? S.path[i + 1] : "—"}${i === S.idx ? " · current" : ""}</div>`;
+    box.appendChild(el);
+    drawBoard(el.querySelector("canvas"), { index: i, thumb: true });
+    el.onclick = () => jumpTo(i);
+  }
+  if (j.count > shown.length) {
+    const more = document.createElement("div");
+    more.className = "hint";
+    more.textContent = `${j.count - shown.length} more matches not shown — enter more nails to narrow it down.`;
+    box.appendChild(more);
+  }
+}
+
+async function jumpTo(i) {
+  if (!confirm(`Set current position to line ${i} (next nail ${S.path[i + 1] ?? "—"})?\n\nThe existing saved state is backed up first.`)) return;
+  const j = await api("/api/jump", { index: i });
+  S.idx = j.index;
+  S.stats = j.stats;
+  render();
+  const toast = $("findToast");
+  toast.textContent = `Position set to line ${j.index}.` +
+    (j.backup ? ` Previous state saved as ${j.backup}.` : "");
+  toast.classList.remove("hide");
+  runSearch();
+}
+
+$("btnFind").onclick = runSearch;
+$("findInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") runSearch();
+});
+
+// ---------- boot ----------
+addEventListener("resize", () => { if (!$("tab-place").classList.contains("hide")) render(); });
+
+fetch("/api/init").then(r => r.json()).then(j => {
+  S.path = j.path; S.N = j.n_nails; S.nLines = j.n_lines;
+  S.idx = j.index; S.stats = j.stats;
+  $("seqinfo").textContent = `${j.sequence} — ${j.n_lines} lines, ${j.n_nails} nails`;
+  render();
+});
+</script>
+</body>
+</html>

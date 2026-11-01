@@ -1,0 +1,13 @@
+# Private review notes (not for the public repo)
+/NOTES.md
+/MEDIA_NEEDED.md
+
+# Tool output and local state
+out/
+input/
+place_state.json
+place_state.json.bak.*
+*.progress
+__pycache__/
+*.pyc
+.DS_Store
