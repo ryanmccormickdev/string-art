@@ -5,17 +5,17 @@
   <img src="media/winding-order.gif" width="330" alt="Time-lapse of all 1,853 lines going on in the order I wound them, with the logo appearing as the background fills in">
 </p>
 
-A program that turns an image into a list of nails to wrap thread around, and the piece I made with it: the Colorado Buffaloes logo in 1,853 lines of black thread, on a 12-inch round with 200 nails. That's about 463 yards of thread and 6.4 hours of winding. The GIF is every line in the order I wound it.
+A program that turns an image into a list of nails to wrap thread around, and the piece I made with it for my dad: the Colorado Buffaloes logo in 1,853 lines of black thread, on a 12-inch round with 200 nails. That's about 463 yards of thread, and it took me about 12 hours straight. The GIF is every line in the order I wound it.
 
 ## How it went
 
-### August 16, afternoon: a solver and 66 tries
+### August 16: a solver and 66 tries
 
-I started out planning a portrait, and the first runs that afternoon were on photos. A 12-inch circle is a small canvas, though, and I switched to logos: about 30 runs on the Stanford block S, then the CU Buffaloes logo.
+I'd wanted to try this ever since I saw a video of a guy making an open-source string art tool. This one was a gift for my dad, so the plan was his face, and the first runs that day were on photos of him. They didn't come out well, so I went looking for something simpler to recognize that would still mean something to him. I tried the Stanford block S for about 30 runs, then settled on the CU Buffaloes logo. CU is his alma mater.
 
-<img src="media/2026-08-16-solver-runs.jpg" width="820" alt="Ten solver simulations from the afternoon: the Stanford S at different contrast settings, then the CU logo, including an inverted run that came out as a starburst and a run that turned into a solid blob">
+<img src="media/2026-08-16-solver-runs.jpg" width="820" alt="Ten solver simulations from August 16: the Stanford S at different contrast settings, then the CU logo, including an inverted run that came out as a starburst and a run that turned into a solid blob">
 
-Those are 10 of the 66 runs between 4:41 and 5:48 pm (the photo runs aren't shown). The trick that made it work is the black background. The solver puts thread wherever the image is dark, so the background fills in with black and the logo stays bare board. On a gold board that's black and gold. With the target inverted (the 5:38:55 run above), the logo got the thread instead and it came out as a starburst. The run I wound is from 5:47 pm: 1,853 lines, 76% mean coverage.
+Those are 10 of the 66 runs between 5:41 and 6:48 pm (the photo runs aren't shown). The trick that made it work is the black background. The solver puts thread wherever the image is dark, so the background fills in with black and the logo stays bare board. On a gold board that's black and gold. With the target inverted (the 6:38:55 run above), the logo got the thread instead and it came out as a starburst. The run I wound is from 6:47 pm: 1,853 lines, 76% mean coverage.
 
 ### Before the 21st: the board
 
@@ -24,17 +24,17 @@ Those are 10 of the 66 runs between 4:41 and 5:48 pm (the photo runs aren't show
   <img src="media/2026-08-22-side.jpg" width="380" alt="The board from the side, held in my hand, showing its thickness and the nails">
 </p>
 
-200 nails, 4.5 mm apart on an 11.3-inch circle, laid out with a true-scale template from `template.py` (it prints a 1-inch calibration square on every page, so you can check the printer didn't scale it). I painted every 10th nail head red and every 5th green, so I could count off from the nearest mark while winding.
+I got the materials at Michaels, painted the base gold, and put in 200 pin nails, 4.5 mm apart on an 11.3-inch circle, laid out with a true-scale template from `template.py` (it prints a 1-inch calibration square on every page, so you can check the printer didn't scale it). The drilling and nailing took about 3 hours. I painted every 10th nail head red and every 5th green, so I could count off from the nearest mark while winding.
 
 ### August 21: the winder, then winding
 
 <img src="media/place-winder.png" width="820" alt="The winding app: the next nail, 139, in huge magenta, Back and Next buttons, Auto at 8000 ms, Voice, a ring of all 200 nails with the current chord dashed in, and a zoomed view around nail 139">
 
-That morning I built a visual winder (`place.py`) to sit next to the board. It shows the next nail as a huge number, draws the whole ring with the same red and green marks as the board, and zooms in around the target nail. Space goes to the next line, it can auto-advance on a timer or listen for "next" and "back", and it saves my position on every move. There's also a "Find my spot" tab: type the last few nails you wrapped and it shows every place in the sequence that matches. It tracks working time, and it doesn't count gaps over 5 minutes, so breaks don't wreck the ETA.
+First I built a visual winder (`place.py`) to sit next to the board. It shows the next nail as a huge number, draws the whole ring with the same red and green marks as the board, and zooms in around the target nail. Space goes to the next line, it can auto-advance on a timer or listen for "next" and "back", and it saves my position on every move. There's also a "Find my spot" tab: type the last few nails you wrapped and it shows every place in the sequence that matches. It tracks working time, and it doesn't count gaps over 5 minutes, so breaks don't wreck the ETA.
 
 <img src="media/2026-08-21-1755-winding.jpg" width="330" alt="The piece partway through on the evening of August 21, the logo's outline just starting to show">
 
-That's 5:55 pm, partway in. The last line went on at 10:02 pm. The log says 6.4 hours of actual winding, about 12 seconds a line overall, and the last 400 lines went on at about 8 seconds each (which matches the auto-advance default, 8 seconds).
+That's 5:55 pm, partway in. I used the voice control, so I just said "next" after every wrap. The last line went on at 11:02 pm. All in, I spent about 12 hours straight on it, even though it was supposed to take 6 or so. The winder's log says 6.4 hours, but it only counts time between lines and drops any gap over 5 minutes. The last 400 lines went on at about 8 seconds each.
 
 ## How it works
 
@@ -90,3 +90,7 @@ python place.py --sequence out/sequence.json      # then open http://127.0.0.1:5
 - 12 inches is an honest canvas but it isn't a photograph. The well-known portrait pieces use 3,000 to 4,000 lines on boards twice this size.
 - Ideas for a better solver: a lookahead or beam search instead of pure greedy, comparing blurred images instead of raw pixels (closer to what your eye does), denser nails where the image has detail, and more than one thread color.
 - The Colorado Buffaloes logo belongs to the University of Colorado. The logo image itself isn't in this repo, only the nail sequence made from it.
+
+## License
+
+MIT ([`LICENSE`](LICENSE)). That covers the code, not the logo.
